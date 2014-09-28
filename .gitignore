@@ -1,0 +1,17 @@
+# ignore any .o and .a files
+*.[oa]
+# ignore any file ending with tilde
+*~
+# ignore all files under targets dir
+/.idea
+
+.log
+
+__pycache__
+*.pyc
+
+.spyderproject
+.spyderworkspace
+*.swp
+*.vtp
+doc/_build
