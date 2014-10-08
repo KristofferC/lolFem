@@ -1,3 +1,6 @@
+# cython: profile=True
+import pstats, cProfile
+
 """
 An example showing bending of a beam by applying a force to the end.
 """
@@ -71,5 +74,10 @@ model = NonLinearStatic(solver, domain, timer, vtk_name)
 # Start 'er up.
 model.go()
 
-print model.domain.get_all_dof_values()
+#cProfile.runctx("model.go()", globals(), locals(), "Profile.prof")
+
+#s = pstats.Stats("Profile.prof")
+#s.strip_dirs().sort_stats("time").print_stats()
+
+#print model.domain.get_all_dof_values()
 
