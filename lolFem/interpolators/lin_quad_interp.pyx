@@ -1,6 +1,12 @@
 import logging
 
 import numpy as np
+cimport numpy as np
+cimport cython
+
+DTYPE = np.float64
+
+ctypedef np.float64_t DTYPE_t
 
 from .interpolator import Interpolator
 from lolFem.core.mt_tools import determinant_2x2, inv_2x2
@@ -14,10 +20,11 @@ class LinQuadInterp(Interpolator):
         pass
 
     # Shape functions in local coordinates
-    def eval_N(self, local_coords):
-        N = np.zeros(4, dtype=np.float64)
-        ksi = local_coords[0]
-        eta = local_coords[1]
+    @cython.boundscheck(False)
+    def eval_N(self, np.ndarray[DTYPE_t, ndim=1] local_coords not None):
+        cdef np.ndarray[DTYPE_t, ndim=1]  N = np.zeros(4, dtype=DTYPE)
+        cdef double ksi = local_coords[0]
+        cdef double eta = local_coords[1]
 
         N[0] = (1.0 + ksi) * (1.0 + eta) * 0.25
         N[1] = (1.0 - ksi) * (1.0 + eta) * 0.25
@@ -47,8 +54,11 @@ class LinQuadInterp(Interpolator):
 
     def give_J(self, local_coords, vertices, mesh):
 
-        J = np.zeros((2, 2), dtype=np.float64)
-        dN = self.give_derivatives(local_coords)
+        cdef np.ndarray[DTYPE_t, ndim=2] J = np.zeros((2, 2), dtype=np.float64)
+        cdef np.ndarray[DTYPE_t, ndim=2] dN = self.give_derivatives(local_coords)
+
+        cdef double x
+        cdef double y
 
         for row in xrange(0, 4):
             x = mesh.nodes[vertices[row]].coordinates[0]
@@ -62,7 +72,7 @@ class LinQuadInterp(Interpolator):
         return J
 
     def give_det_J(self, local_coords, vertices, mesh):
-        J = self.give_J(local_coords, vertices, mesh)
+        cdef np.ndarray[DTYPE_t, ndim=2] J = self.give_J(local_coords, vertices, mesh)
         return determinant_2x2(J)
 
     def give_derivatives(self, local_coords):
@@ -72,10 +82,10 @@ class LinQuadInterp(Interpolator):
         :return:
         :rtype: numpy.ndarray
         """
-        ksi = local_coords[0]
-        eta = local_coords[1]
+        cdef double ksi = local_coords[0]
+        cdef double eta = local_coords[1]
 
-        dN = np.zeros((4, 2), dtype=np.float64)
+        cdef np.ndarray[DTYPE_t, ndim=2] dN = np.zeros((4, 2), dtype=np.float64)
 
         # Derivative w.r.t ksi
         dN[0, 0] = 0.25 * (1.0 + eta)

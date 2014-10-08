@@ -3,6 +3,12 @@ An example showing bending of a beam by applying a force to the end.
 """
 import os
 
+import numpy as np
+import pyximport;
+pyximport.install(setup_args={"script_args":["--compiler=mingw32"],
+                              "include_dirs":np.get_include()},
+                  reload_support=True)
+
 
 from lolFem.core.boundary_conditions.dirichlet import Dirichlet
 from lolFem.core.read_abaqus_mesh import read_abaqus_mesh
@@ -55,7 +61,7 @@ solver = Newton(rel_tol, miter)
 #solver = NumpyLinalgSpSolve()
 
 # Only one time.
-timer = [0.0, 0.5, 0.0]
+timer = [1.0]
 
 # Make model
 vtk_name = "results/homogen_y"
