@@ -5,12 +5,10 @@ An example showing bending of a beam by applying a force to the end.
 from lolFem.core.boundary_conditions.point_load import PointLoad
 from lolFem.core.boundary_conditions.dirichlet import Dirichlet
 from lolFem.core.read_abaqus_mesh import read_abaqus_mesh
-from lolFem.core.solvers.numpy_linalg_sp_solve import NumpyLinalgSpSolve
 from lolFem.core.solvers.newton_raphson import Newton
 from lolFem.core.domain import Domain
 from lolFem.materials.linear_isotropic import LinearIsotropic
-from lolFem.core.models.linear_static import LinearStatic
-from lolFem.core.models.non_linear_static import NonLinearStatic
+from lolFem.core.models.static import NonLinearStatic
 from lolFem.core.section import Section
 from lolFem.core.dof import D_u, D_v
 

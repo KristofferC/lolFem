@@ -29,7 +29,7 @@ class LinearIsotropic(Material):
 
         return k
 
-    def give_stiffness_matrix_plane_strain(self, gp):
+    def give_stiffness_matrix_plane_strain(self, gp, time_assistant):
         k = np.zeros((4, 4), dtype=np.float64)
 
         factor = self.E / ((1.0 + self.nu) * (1.0 - 2.0 * self.nu))
@@ -48,8 +48,8 @@ class LinearIsotropic(Material):
 
         return k
 
-    def compute_stress(self, strain, gp):
-        D = self.give_stiffness_matrix_plane_strain(gp)
+    def compute_stress(self, strain, gp, time_assistant):
+        D = self.give_stiffness_matrix_plane_strain(gp, time_assistant)
         stress = D.dot(strain)
         gp.material_status.temp_stress = stress
         gp.material_status.temp_strain = strain

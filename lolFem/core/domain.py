@@ -155,7 +155,7 @@ class Domain(object):
                 node.dofs.append(Dof(n, node, dof_type, dof_id))
                 n += 1
 
-    def update_dof_values(self, u, time):
+    def update_dof_values(self, u, time_assistant):
         """
         Updates dof with new values.
 
@@ -167,8 +167,8 @@ class Domain(object):
 
         u: list of floats
             List of unknowns in order of their equation number.
-        time: float
-            Current time in the analysis.
+        time_assistant : `lolFem.core.time_assistant.TimeAssistant`
+            TimeAssistant class to assist with time keeping
         """
 
         for node_id, node in self.mesh.nodes.iteritems():
@@ -180,7 +180,7 @@ class Domain(object):
                 # the value form the argument u.
                 bc = self.dof_bc[node.n].get(dof_id, 0)
                 if bc and bc.essential:
-                    dof.value = bc.give_value(time, node)
+                    dof.value = bc.give_value(time_assistant, node)
                 else:
                     dof.value += u[dof.equation_number - 1]
 
@@ -226,7 +226,7 @@ class Domain(object):
         self.eq_n_map = eq_n_map
         self.pres_eq_n_map = pres_eq_n_map
 
-    def compute_load_vector(self, t):
+    def compute_load_vector(self, time_assistant):
         """
         Computes external load from boundary conditions.
 
@@ -238,8 +238,8 @@ class Domain(object):
 
         Parameters
         ==========
-        time : float
-            Current time in the analysis.
+        time_assistant : `lolFem.core.time_assistant.TimeAssistant`
+            TimeAssistant class to assist with time keeping
 
         Returns
         =======
@@ -255,11 +255,11 @@ class Domain(object):
                 bc = self.dof_bc[node.n].get(dof.dof_id, 0)
                 # TODO: Fix this for more general forces
                 if bc and isinstance(bc, PointLoad):
-                    f[dof.equation_number - 1] = bc.give_value(t, node)
-                    f_squared[dof.equation_number - 1] = bc.give_value(t, node) ** 2
+                    f[dof.equation_number - 1] = bc.give_value(time_assistant, node)
+                    f_squared[dof.equation_number - 1] = bc.give_value(time_assistant, node) ** 2
         return f, f_squared
 
-    def assemble_stiffness_matrix(self):
+    def assemble_stiffness_matrix(self, time_assistant):
         """
         Assembles the global stiffness matrix.
 
@@ -287,7 +287,7 @@ class Domain(object):
         I, J, V = [], [], []
         # Loop elements and get their element stiffness matrix Ke.
         for element in self.mesh.elements.values():
-            Ke = element.compute_stiffness_matrix(self.mesh)
+            Ke = element.compute_stiffness_matrix(self.mesh, time_assistant)
             dofs = []
             # Extract all dofs from the element
             for el_vert in element.vertices:
@@ -329,13 +329,13 @@ class Domain(object):
                 u[dof.n - 1] = dof.value
         return u
 
-    def assemble_internal_forces(self, t):
-        f_int, f_int_squared = self.get_internal_forces(t)
+    def assemble_internal_forces(self, time_assistant):
+        f_int, f_int_squared = self.get_internal_forces(time_assistant)
         # TODO: Fix this explicit conversion
         eq_vec = np.array(self.eq_n_map)
         return f_int[eq_vec - 1], f_int_squared[eq_vec - 1]
 
-    def get_internal_forces(self, t):
+    def get_internal_forces(self, time_assistant):
         """
         Assembles the internal force vector.
 
@@ -350,8 +350,8 @@ class Domain(object):
 
         Parameters
         ==========
-        t : float
-            The current time in the analysis
+        time_assistant : `lolFem.core.time_assistant.TimeAssistant`
+            TimeAssistant class to assist with time keeping
 
         Returns
         =======
@@ -359,14 +359,14 @@ class Domain(object):
             Internal forces for each dof
         """
         f_int = np.zeros(self.number_of_equations +
-                          self.number_of_prescribed_equations,
+                         self.number_of_prescribed_equations,
                          dtype=np.float64)
         f_int_squared = np.zeros(self.number_of_equations +
-                          self.number_of_prescribed_equations,
-                         dtype=np.float64)
+                                 self.number_of_prescribed_equations,
+                                 dtype=np.float64)
         for element_id, element in self.mesh.elements.iteritems():
             # Get the internal force for that element
-            f_int_ele = element.compute_internal_forces(t)
+            f_int_ele = element.compute_internal_forces(time_assistant)
             i = 0
             for el_vert in element.vertices:
                 node = self.mesh.nodes[el_vert]
@@ -374,8 +374,6 @@ class Domain(object):
                     f_int[dof.n - 1] += f_int_ele[i]
                     f_int_squared[dof.n - 1] += f_int_ele[i] ** 2
                     i += 1
-        #self.f = f_int
-        #self.f_squared = f_int_squared
         return f_int, f_int_squared
 
     def recover_fields_in_nodes(self):
@@ -385,18 +383,23 @@ class Domain(object):
 
         # TODO: Fix this for n_gps != n_vertices in element
         """
+
+        #TODO: This code has too much side effects, I mean
+        # how do you know that stuffs in Nodes are set
+        # in the element recovery fields function.
         for element in self.mesh.elements.values():
             element.recover_fields_in_nodes(self.mesh)
 
         # Average the fields from all contribution,
         # TODO: Maybe least square instead?
+
+        # TODO: We should just add instead of appending.
         for node in self.mesh.nodes.values():
-            # print "node_stress_vec"
-            # print node.stress_vec
             node.stress = np.mean(node.stress_vec, axis=0)
-            # print "node.stress"
-            # print node.stress
             node.strain = np.mean(node.strain_vec, axis=0)
+
+            node.stress_vec = []
+            node.strain_vec = []
 
     def update(self):
         """

@@ -121,7 +121,7 @@ class Element(object):
         for gp in self.integrator.gausspoints:
             gp.material_status = self.section.material.create_material_status()
 
-    def compute_stiffness_matrix(self, mesh):
+    def compute_stiffness_matrix(self, mesh, time_assistant):
         """
         Computes the element stiffness matrix.
 
@@ -138,7 +138,7 @@ class Element(object):
         for gp in self.integrator.gausspoints:
 
             Be = self.compute_B(gp, mesh)
-            De = self.compute_constitutive_matrix(gp)
+            De = self.compute_constitutive_matrix(gp, time_assistant)
             dV = self.compute_volume_around(gp, mesh)
 
             # And this is why .dot is stupid dotdottelidottdott:
@@ -146,7 +146,7 @@ class Element(object):
             Ke += np.transpose(Be).dot(De.dot(Be)) * dV
         return Ke
 
-    def compute_constitutive_matrix(self, gp):
+    def compute_constitutive_matrix(self, gp, time_assistant):
         """
         Computes the consitutive matrix, 'D', for the element.
 
@@ -156,17 +156,17 @@ class Element(object):
             The constitutive matrix.
         """
         material = self.section.material
-        return material.give_stiffness_matrix_plane_strain(gp)
+        return material.give_stiffness_matrix_plane_strain(gp, time_assistant)
 
-    def compute_unknown(self, t):
+    def compute_unknown(self, time_assistant):
         """
         Computes the values of the dofs
         for the element.
 
         Parameters
         ==========
-        t : float
-            The current time in the analysis
+        time_assistant : `lolFem.core.time_assistant.TimeAssistant`
+            TimeAssistant class to assist with time keeping
 
         Returns
         =======
@@ -182,10 +182,10 @@ class Element(object):
                     u.append(dof.value)
                 else:
                     bc = self.domain.dof_bc[node.n].get(dof.dof_id)
-                    u.append(bc.give_value(t, node))
+                    u.append(bc.give_value(time_assistant, node))
         return u
 
-    def compute_internal_forces(self, t):
+    def compute_internal_forces(self, time_assistant):
         """
         Computes the internal forces in the element.
 
@@ -200,7 +200,7 @@ class Element(object):
             The internal forces
         """
         f_int = np.zeros(self.n_dofs, dtype=np.float64)
-        u = self.compute_unknown(t)
+        u = self.compute_unknown(time_assistant)
         for gp in self.integrator.gausspoints:
             B = self.compute_B(gp, self.domain.mesh)
 
@@ -208,7 +208,7 @@ class Element(object):
 
             # This will also set stress + strain in temp variables
             # in gp material status
-            stress = self.section.material.compute_stress(strain, gp)
+            stress = self.section.material.compute_stress(strain, gp, time_assistant)
 
             dV = self.compute_volume_around(gp,
                                             self.domain.mesh)

@@ -11,7 +11,7 @@ from lolFem.elements.quad_plane_strain import QuadPlaneStrain
 from lolFem.core.node import Node
 from lolFem.core.mesh import Mesh
 from lolFem.core.element_set import ElementSet
-from lolFem.core.models.non_linear_static import NonLinearStatic
+from lolFem.core.models.static import NonLinearStatic
 from lolFem.core.section import Section
 from lolFem.core.dof import D_u, D_v
 from lolFem.materials.linear_isotropic import LinearIsotropic

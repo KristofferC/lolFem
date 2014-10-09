@@ -36,7 +36,7 @@ class Newton(Solver):
         self.miter = miter
         self.f_to_break = f_to_break
 
-    def solve(self, model, t):
+    def solve(self, model, time_assistant):
         """
         Attempts to solve the force equilibrium equations
         for the current time step.
@@ -49,10 +49,8 @@ class Newton(Solver):
             The current time in the analysis.
         """
 
-        print t
-
         # Compute applied loads, this should be independent of deformation
-        load, load_squared = model.domain.compute_load_vector(t)
+        load, load_squared = model.domain.compute_load_vector(time_assistant)
         iteration = 0
         while True:
             if iteration > self.miter:
@@ -63,7 +61,7 @@ class Newton(Solver):
                 break
 
             # Calculate internal forces.
-            internal_forces, internal_forces_squared = model.domain.assemble_internal_forces(t)
+            internal_forces, internal_forces_squared = model.domain.assemble_internal_forces(time_assistant)
             f_tot = load - internal_forces
 
             residual = np.sqrt(f_tot.dot(f_tot)) / np.sqrt(np.sum(internal_forces_squared + load_squared))
@@ -84,18 +82,15 @@ class Newton(Solver):
                 break
 
             # Full Newton, update stiffness matrix
-            K = model.domain.assemble_stiffness_matrix()
+            K = model.domain.assemble_stiffness_matrix(time_assistant)
 
             # Solve for unknowns
-            du = self.linear_solver.solve_eq(K, f_tot)
+            du = self.linear_solver.solve(K, f_tot)
 
             print "du"
             print du
 
             # Propagate new unknowns back to dofs.
-            model.domain.update_dof_values(du, t)
+            model.domain.update_dof_values(du, time_assistant)
 
             iteration += 1
-
-
-        model.f = internal_forces

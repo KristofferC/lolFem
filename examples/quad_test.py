@@ -5,13 +5,13 @@ created in the file"""
 from lolFem.core.boundary_conditions.point_load import PointLoad
 from lolFem.core.boundary_conditions.dirichlet import Dirichlet
 from lolFem.core.node_set import NodeSet
-from lolFem.core.solvers.numpy_linalg_sp_solve import NumpyLinalgSpSolve
+from lolFem.core.solvers.newton_raphson import Newton
 from lolFem.core.domain import Domain
 from lolFem.elements.quad_plane_strain import QuadPlaneStrain
 from lolFem.core.node import Node
 from lolFem.core.mesh import Mesh
 from lolFem.core.element_set import ElementSet
-from lolFem.core.models.linear_static import LinearStatic
+from lolFem.core.models.static import Static
 from lolFem.core.section import Section
 from lolFem.core.dof import D_u, D_v
 from lolFem.materials.linear_isotropic import LinearIsotropic
@@ -53,7 +53,6 @@ mesh.add_element_set(element_set)
 mesh.add_node_set(bottom_set)
 mesh.add_node_set(top_set)
 
-
 # Materials
 material = LinearIsotropic(250e9, 0.3)
 
@@ -62,27 +61,22 @@ thickness = 1.0
 section = Section(material, thickness)
 section.assign_to(mesh, mesh.element_sets["all"])
 
-
 # Boundary conditions
 dirich = Dirichlet(0.0, [D_u, D_v], mesh.node_sets["y0"])
 load = PointLoad(10e8, [D_v], mesh.node_sets["y1"])
-
 bcs = [dirich, load]
-
 
 # Create domain
 domain_type = "plane_strain"
 domain = Domain(mesh, bcs, domain_type)
 
-solver = NumpyLinalgSpSolve()
-#solver = Newton(10e-6)
+rel_tol = 10e-6
+miter = 10
+solver = Newton(rel_tol, miter)
+
 time = [1]
-model = LinearStatic(solver, domain, time)
-#model = NonLinearStatic(solver, domain, time)
+
+model = Static(solver, domain, time)
 model.go()
 
 print model.domain.get_all_dof_values()
-
-# print model.u
-
-# print u

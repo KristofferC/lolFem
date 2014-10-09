@@ -12,6 +12,7 @@ class MaterialStatus(object):
         self.strain = None
         self.stress = None
 
+
     def update(self):
         self.stress = self.temp_stress
         self.strain = self.temp_strain

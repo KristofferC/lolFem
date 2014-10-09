@@ -60,6 +60,8 @@ class Node(object):
         Propagate the update command
         to all dofs.
         """
+        self.stress_vec = []
+        self.stress_vec = []
         for dof in self.dofs:
             dof.update()
 

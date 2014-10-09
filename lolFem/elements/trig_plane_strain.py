@@ -65,9 +65,9 @@ class TrigPlaneStrain(Element):
 
     # TODO: This code sucks
     def recover_fields_in_nodes(self, mesh):
-        gp = self.integrator.gausspoints[0]
-        for vert in self.vertices:
+        for i, vert in enumerate(self.vertices):
             node = mesh.nodes[vert]
+            gp = self.integrator.gausspoints[0] # Only 1 gp
             node.stress_vec.append(gp.material_status.stress)
             node.strain_vec.append(gp.material_status.strain)
 

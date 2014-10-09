@@ -7,13 +7,15 @@ import logging
 
 import numpy as np
 
+from lolFem.core.time_assistant import TimeAssistant
+
 logger = logging.getLogger(__name__)
 
 
 class Model(object):
     __metaclass__ = ABCMeta
 
-    def __init__(self, solver, domain, timer, vtk_file_name=None):
+    def __init__(self, solver, domain, times, vtk_file_name=None):
         """
         Initiates a model class instance.
 
@@ -37,13 +39,14 @@ class Model(object):
             element.model = self
 
         self.domain.model = self
-        self.timer = timer
         self.vtk_file_name = vtk_file_name
         self. f = None
 
+        self.time_assistant = TimeAssistant(times)
+
     def go(self):
         """
-        Startes the analysis.
+        Starts the analysis.
 
         This is done by first creating the dofs, then assigning
         the dofs their numbers, then creating the needed
@@ -54,8 +57,6 @@ class Model(object):
         self.domain.set_dof_numbering()
         self.domain.create_material_statuses()
         self.solve(self)
-
-        # loop time steps, for now only 1 step
 
     def check(self):
         """

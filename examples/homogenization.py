@@ -7,11 +7,9 @@ import os
 from lolFem.core.boundary_conditions.dirichlet import Dirichlet
 from lolFem.core.read_abaqus_mesh import read_abaqus_mesh
 from lolFem.core.solvers.newton_raphson import Newton
-from lolFem.core.solvers.numpy_linalg_sp_solve import NumpyLinalgSpSolve
 from lolFem.core.domain import Domain
 from lolFem.materials.linear_isotropic import LinearIsotropic
-from lolFem.core.models.non_linear_static import NonLinearStatic
-from lolFem.core.models.linear_static import LinearStatic
+from lolFem.core.models.static import Static
 from lolFem.core.section import Section
 from lolFem.core.dof import D_u, D_v
 
@@ -52,15 +50,13 @@ domain = Domain(mesh, bcs, domain_type)
 rel_tol = 10e-3
 miter = 10
 solver = Newton(rel_tol, miter)
-#solver = NumpyLinalgSpSolve()
 
 # Only one time.
-timer = [0.0, 0.5, 0.0]
+timer = [0.5]
 
 # Make model
 vtk_name = "results/homogen_y"
-model = NonLinearStatic(solver, domain, timer, vtk_name)
-#model = LinearStatic(solver, domain, timer, vtk_name)
+model = Static(solver, domain, timer, vtk_name)
 
 # Start 'er up.
 model.go()

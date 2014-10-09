@@ -57,7 +57,7 @@ class BoundaryCondition(object):
         self.essential = essential
         self.set_applied_to = set_applied_to
 
-    def give_value(self, t, node):
+    def give_value(self, time_assistant, node):
         """
         Returns the value after bing scaled with `factor_func`
 
@@ -66,6 +66,7 @@ class BoundaryCondition(object):
         t : float
             Current time in analysis
         """
+        t = time_assistant.curr_time
         x = node.give_coordinate(1)
         y = node.give_coordinate(2)
         z = node.give_coordinate(3)
